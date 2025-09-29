@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { db } from '@/lib/firebase';
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  query, 
+  where, 
+  orderBy,
+  doc,
+  updateDoc,
+  getDoc
+} from 'firebase/firestore';
 
 interface HealthCheckRecord {
   user_email: string;
@@ -11,21 +21,58 @@ interface HealthCheckRecord {
   created_at: string;
 }
 
-const DATA_FILE = path.join(process.cwd(), 'data', 'health-checks.json');
-
-// Read existing data
-const readData = (): HealthCheckRecord[] => {
-  if (!fs.existsSync(DATA_FILE)) {
-    return [];
-  }
+export async function POST(request: NextRequest) {
   try {
-    const data = fs.readFileSync(DATA_FILE, 'utf8');
-    return JSON.parse(data);
+    const body = await request.json();
+    const { user_email, team_id, snippet_date, content, rating } = body;
+
+    if (!user_email || !team_id || !snippet_date || !content || rating === undefined) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // Check if record already exists for this user and date
+    const healthChecksRef = collection(db, 'healthChecks');
+    const q = query(
+      healthChecksRef,
+      where('user_email', '==', user_email),
+      where('snippet_date', '==', snippet_date)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    const newRecord: HealthCheckRecord = {
+      user_email,
+      team_id,
+      snippet_date,
+      content,
+      rating,
+      created_at: new Date().toISOString()
+    };
+
+    if (!querySnapshot.empty) {
+      // Update existing record
+      const docRef = querySnapshot.docs[0].ref;
+      await updateDoc(docRef, newRecord as any);
+    } else {
+      // Add new record
+      await addDoc(healthChecksRef, newRecord as any);
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Health check data saved successfully'
+    });
   } catch (error) {
-    console.error('Error reading health check data:', error);
-    return [];
+    console.error('Error saving health check:', error);
+    return NextResponse.json(
+      { error: 'Failed to save health check data' },
+      { status: 500 }
+    );
   }
-};
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -36,18 +83,25 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const allData = readData();
+    const healthChecksRef = collection(db, 'healthChecks');
+    const q = query(
+      healthChecksRef,
+      where('team_id', '==', teamId),
+      orderBy('snippet_date', 'desc')
+    );
     
-    // Filter by team ID
-    const teamData = allData.filter(record => record.team_id === teamId);
+    const querySnapshot = await getDocs(q);
     
     // Transform to match frontend interface
-    const transformedData = teamData.map(record => ({
-      user_email: record.user_email,
-      snippet_date: record.snippet_date,
-      rating: record.rating,
-      content: record.content
-    }));
+    const transformedData = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        user_email: data.user_email,
+        snippet_date: data.snippet_date,
+        rating: data.rating,
+        content: data.content
+      };
+    });
 
     return NextResponse.json(transformedData);
   } catch (error) {

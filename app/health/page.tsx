@@ -77,9 +77,9 @@ export default function HealthPage() {
       setApiResponse(`Status: ${response.status}\nResponse: ${responseText}`);
 
       if (response.ok) {
-        // n8n webhook 성공 후 로컬 데이터베이스에도 저장
+        // n8n webhook 성공 후 Firebase Firestore에도 저장
         try {
-          await fetch('/api/save-health-check', {
+          const dbResponse = await fetch('/api/team-health', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -92,8 +92,12 @@ export default function HealthPage() {
               rating: selectedRating
             }),
           });
+          
+          if (dbResponse.ok) {
+            console.log('Health check data saved to Firebase Firestore');
+          }
         } catch (dbError) {
-          console.error('Local database save failed:', dbError);
+          console.error('Firebase Firestore save failed:', dbError);
         }
         
         alert('스니펫이 성공적으로 저장되었습니다!');
