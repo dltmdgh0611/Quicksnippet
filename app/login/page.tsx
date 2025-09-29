@@ -38,12 +38,47 @@ export default function LoginPage() {
       {/* Header */}
       <header className="relative z-10">
         <nav className="flex items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-              <div className="w-4 h-4 bg-purple-glow rounded-full"></div>
-            </div>
-            <span className="text-xl font-bold">Quick Snippet</span>
-          </Link>
+              <Link href="/" className="flex items-center space-x-2">
+                <div className="relative">
+                  <svg 
+                    className="w-8 h-8" 
+                    viewBox="0 0 24 24" 
+                    fill="none"
+                    style={{
+                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3)) drop-shadow(0 0 12px rgba(255, 193, 7, 0.6))'
+                    }}
+                  >
+                    <defs>
+                      <linearGradient id="lightningGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#FFD700" />
+                        <stop offset="30%" stopColor="#FFA500" />
+                        <stop offset="70%" stopColor="#FF8C00" />
+                        <stop offset="100%" stopColor="#FF6347" />
+                      </linearGradient>
+                      <filter id="lightningGlow">
+                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                        <feMerge> 
+                          <feMergeNode in="coloredBlur"/>
+                          <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                      </filter>
+                    </defs>
+                    <path 
+                      d="M7 2v11h3v9l7-12h-4l4-8z" 
+                      fill="url(#lightningGradient)"
+                      filter="url(#lightningGlow)"
+                      style={{
+                        stroke: '#FFD700',
+                        strokeWidth: '0.5',
+                        strokeLinejoin: 'round'
+                      }}
+                    />
+                  </svg>
+                  {/* 3D highlight effect */}
+                  <div className="absolute top-0.5 left-0.5 w-2 h-3 bg-gradient-to-b from-white/60 to-transparent rounded-sm pointer-events-none"></div>
+                </div>
+                <span className="text-xl font-bold">Quick Snippet</span>
+              </Link>
           <div className="flex items-center space-x-6">
             <Link href="/" className="text-white hover:text-purple-glow transition-colors">
               홈

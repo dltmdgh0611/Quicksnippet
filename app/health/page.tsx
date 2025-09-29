@@ -51,7 +51,11 @@ export default function HealthPage() {
     
     try {
       const today = new Date().toISOString().split('T')[0]; // yyyy-mm-dd format
-      const content = `What: ${snippetData.what}\nWhy: ${snippetData.why}\nHighlight: ${snippetData.highlight}\nLowlight: ${snippetData.lowlight}\nTomorrow: ${snippetData.tomorrow}`;
+      const content = `## What\n${snippetData.what}\n\n## Why\n${snippetData.why}\n\n## Highlight\n${snippetData.highlight}\n\n## Lowlight\n${snippetData.lowlight}\n\n## Tomorrow\n${snippetData.tomorrow}`;
+      
+      // 10초 타임아웃 설정
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
       
       const response = await fetch('https://n8n.1000.school/webhook/0a43fbad-cc6d-4a5f-8727-b387c27de7c8', {
         method: 'POST',
@@ -64,7 +68,10 @@ export default function HealthPage() {
           snippet_date: today,
           content: content
         }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         // n8n webhook 성공 후 Firebase Firestore에도 저장
@@ -90,10 +97,17 @@ export default function HealthPage() {
         sessionStorage.removeItem('snippetData');
         router.push('/');
       } else {
+        console.error('API Error:', response.status, await response.text());
         alert('개발자 이승호한테 연락하세요');
       }
-    } catch (error) {
-      alert('개발자 이승호한테 연락하세요');
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.error('Request timeout after 10 seconds');
+        alert('요청 시간이 초과되었습니다. 개발자 이승호한테 연락하세요');
+      } else {
+        console.error('Submit error:', error);
+        alert('개발자 이승호한테 연락하세요');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -116,12 +130,47 @@ export default function HealthPage() {
       {/* Header */}
       <header className="relative z-10">
         <nav className="flex items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-              <div className="w-4 h-4 bg-purple-glow rounded-full"></div>
-            </div>
-            <span className="text-xl font-bold">Quick Snippet</span>
-          </Link>
+              <Link href="/" className="flex items-center space-x-2">
+                <div className="relative">
+                  <svg 
+                    className="w-8 h-8" 
+                    viewBox="0 0 24 24" 
+                    fill="none"
+                    style={{
+                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3)) drop-shadow(0 0 12px rgba(255, 193, 7, 0.6))'
+                    }}
+                  >
+                    <defs>
+                      <linearGradient id="lightningGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#FFD700" />
+                        <stop offset="30%" stopColor="#FFA500" />
+                        <stop offset="70%" stopColor="#FF8C00" />
+                        <stop offset="100%" stopColor="#FF6347" />
+                      </linearGradient>
+                      <filter id="lightningGlow">
+                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                        <feMerge> 
+                          <feMergeNode in="coloredBlur"/>
+                          <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                      </filter>
+                    </defs>
+                    <path 
+                      d="M7 2v11h3v9l7-12h-4l4-8z" 
+                      fill="url(#lightningGradient)"
+                      filter="url(#lightningGlow)"
+                      style={{
+                        stroke: '#FFD700',
+                        strokeWidth: '0.5',
+                        strokeLinejoin: 'round'
+                      }}
+                    />
+                  </svg>
+                  {/* 3D highlight effect */}
+                  <div className="absolute top-0.5 left-0.5 w-2 h-3 bg-gradient-to-b from-white/60 to-transparent rounded-sm pointer-events-none"></div>
+                </div>
+                <span className="text-xl font-bold">Quick Snippet</span>
+              </Link>
           <div className="flex items-center space-x-6">
             <Link href="/" className="text-white hover:text-purple-glow transition-colors">
               홈

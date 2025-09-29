@@ -28,7 +28,7 @@ export default function Home() {
   };
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen flex flex-col">
       {/* Background */}
       <div className="fixed inset-0 z-0">
         <DarkVeil
@@ -45,8 +45,43 @@ export default function Home() {
       <header className="relative z-10">
         <nav className="flex items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-              <div className="w-4 h-4 bg-purple-glow rounded-full"></div>
+            <div className="relative">
+              <svg 
+                className="w-8 h-8" 
+                viewBox="0 0 24 24" 
+                fill="none"
+                style={{
+                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3)) drop-shadow(0 0 12px rgba(255, 193, 7, 0.6))'
+                }}
+              >
+                <defs>
+                  <linearGradient id="lightningGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#FFD700" />
+                    <stop offset="30%" stopColor="#FFA500" />
+                    <stop offset="70%" stopColor="#FF8C00" />
+                    <stop offset="100%" stopColor="#FF6347" />
+                  </linearGradient>
+                  <filter id="lightningGlow">
+                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                    <feMerge> 
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                <path 
+                  d="M7 2v11h3v9l7-12h-4l4-8z" 
+                  fill="url(#lightningGradient)"
+                  filter="url(#lightningGlow)"
+                  style={{
+                    stroke: '#FFD700',
+                    strokeWidth: '0.5',
+                    strokeLinejoin: 'round'
+                  }}
+                />
+              </svg>
+              {/* 3D highlight effect */}
+              <div className="absolute top-0.5 left-0.5 w-2 h-3 bg-gradient-to-b from-white/60 to-transparent rounded-sm pointer-events-none"></div>
             </div>
             <span className="text-xl font-bold">Quick Snippet</span>
           </Link>
@@ -96,6 +131,78 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="relative z-10 mt-auto">
+        <div className="border-t border-white/10 bg-black/20 backdrop-blur-sm">
+          <div className="max-w-6xl mx-auto px-6 py-12">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              {/* Brand Section */}
+              <div className="md:col-span-2">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">A</span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Ascentum</h3>
+                    <p className="text-sm text-gray-400">Innovation Team</p>
+                  </div>
+                </div>
+                <p className="text-gray-300 text-sm leading-relaxed max-w-md">
+                  팀의 성장과 발전을 위한 혁신적인 솔루션을 제공합니다. 
+                  Quick Snippet을 통해 일상의 성찰을 체계적으로 관리하세요.
+                </p>
+              </div>
+
+              {/* Quick Links */}
+              <div>
+                <h4 className="text-white font-semibold mb-4">Quick Links</h4>
+                <ul className="space-y-2">
+                  <li>
+                    <Link href="/snippet" className="text-gray-300 hover:text-purple-glow transition-colors text-sm">
+                      스니펫 작성
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/dashboard" className="text-gray-300 hover:text-purple-glow transition-colors text-sm">
+                      팀 헬스체크
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/settings" className="text-gray-300 hover:text-purple-glow transition-colors text-sm">
+                      개인 설정
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Contact */}
+              <div>
+                <h4 className="text-white font-semibold mb-4">Contact</h4>
+                <div className="space-y-2">
+                  <p className="text-gray-300 text-sm">이승호</p>
+                  <p className="text-gray-300 text-sm">Developer</p>
+                  <p className="text-gray-300 text-sm">ascentum@team.com</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Bar */}
+            <div className="border-t border-white/10 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+              <p className="text-gray-400 text-sm">
+                © 2024 Ascentum Team. All rights reserved.
+              </p>
+              <div className="flex items-center space-x-6 mt-4 md:mt-0">
+                <span className="text-gray-400 text-sm">Made with ❤️ by Ascentum</span>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-green-400 text-xs">All systems operational</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
