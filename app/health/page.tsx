@@ -29,17 +29,56 @@ export default function HealthPage() {
       setSnippetData(JSON.parse(savedSnippet));
     }
 
-    // Load team ID from localStorage
-    const savedTeamId = localStorage.getItem('teamId');
-    if (savedTeamId) {
-      setTeamId(savedTeamId);
+    // Firestore에서 사용자 데이터 로드
+    if (user?.email) {
+      loadUserData();
     }
-  }, []);
+  }, [user]);
+
+  const loadUserData = async () => {
+    if (!user?.email) return;
+    
+    try {
+      const response = await fetch(`/api/user?user_email=${encodeURIComponent(user.email)}`);
+      if (response.ok) {
+        const userData = await response.json();
+        setTeamId(userData.team_id || 'default');
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+      setTeamId('default');
+    }
+  };
 
 
   const handleGoBack = () => {
     router.push('/snippet');
   };
+
+  if (!user) {
+    return (
+      <div className="relative min-h-screen">
+        <div className="fixed inset-0 z-0">
+          <DarkVeil
+            hueShift={200}
+            noiseIntensity={0.03}
+            scanlineIntensity={0.08}
+            speed={0.4}
+            scanlineFrequency={40}
+            warpAmount={0.15}
+          />
+        </div>
+        <div className="relative z-10 flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">로그인이 필요합니다</h1>
+            <Link href="/login" className="btn-primary">
+              로그인하기
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async () => {
     if (!snippetData || !user || selectedRating === null) {

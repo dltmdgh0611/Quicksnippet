@@ -12,6 +12,10 @@ export default {
         'dark-bg': '#0a0a0a',
         'purple-glow': '#8b5cf6',
       },
+      fontFamily: {
+        'nanum': ['Nanum Square Round', 'sans-serif'],
+        'sans': ['Nanum Square Round', 'sans-serif'],
+      },
     },
   },
   plugins: [],

@@ -8,18 +8,84 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function SettingsPage() {
   const { user, logout } = useAuth();
   const [teamId, setTeamId] = useState('');
+  const [isJoining, setIsJoining] = useState(false);
+  const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Load team ID from localStorage
-    const savedTeamId = localStorage.getItem('teamId');
-    if (savedTeamId) {
-      setTeamId(savedTeamId);
+    // Firestore에서 사용자 데이터 로드
+    if (user?.email) {
+      loadUserData();
     }
-  }, []);
+  }, [user]);
 
-  const handleTeamIdChange = (value: string) => {
-    setTeamId(value);
-    localStorage.setItem('teamId', value);
+  const loadUserData = async () => {
+    if (!user?.email) return;
+    
+    setIsLoading(true);
+    try {
+      console.log('Loading user data for:', user.email);
+      const response = await fetch(`/api/user?user_email=${encodeURIComponent(user.email)}`);
+      console.log('User API response status:', response.status);
+      
+      if (response.ok) {
+        const userData = await response.json();
+        console.log('User data received:', userData);
+        setTeamId(userData.team_id || '');
+      } else {
+        const errorData = await response.json();
+        console.error('User API error:', errorData);
+        setMessage(`사용자 데이터 로드 실패: ${errorData.error || '알 수 없는 오류'}`);
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+      setMessage('사용자 데이터 로드 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTeamJoin = async () => {
+    if (!teamId.trim()) {
+      setMessage('팀 ID를 입력해주세요.');
+      return;
+    }
+
+    if (!user?.email) {
+      setMessage('로그인이 필요합니다.');
+      return;
+    }
+
+    setIsJoining(true);
+    setMessage('');
+
+    try {
+      const response = await fetch('/api/user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_email: user.email,
+          team_id: teamId.trim()
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setMessage('등록이 완료되었습니다!');
+        // 성공 메시지 후 2초 뒤에 메시지 초기화
+        setTimeout(() => setMessage(''), 2000);
+      } else {
+        setMessage(result.error || '팀 참여에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error joining team:', error);
+      setMessage('네트워크 오류가 발생했습니다.');
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   if (!user) {
@@ -156,15 +222,26 @@ export default function SettingsPage() {
                 <input
                   type="text"
                   value={teamId}
-                  onChange={(e) => handleTeamIdChange(e.target.value)}
+                  onChange={(e) => setTeamId(e.target.value)}
                   placeholder="팀 ID를 입력하세요"
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:border-purple-glow transition-colors"
+                  disabled={isJoining}
                 />
+                {message && (
+                  <div className={`mt-3 p-3 rounded-lg text-sm ${
+                    message.includes('완료') 
+                      ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                      : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                  }`}>
+                    {message}
+                  </div>
+                )}
                 <button 
-                  onClick={() => handleTeamIdChange(teamId)}
-                  className="mt-3 px-4 py-2 bg-purple-glow text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                  onClick={handleTeamJoin}
+                  disabled={isJoining || !teamId.trim()}
+                  className="mt-3 px-4 py-2 bg-purple-glow text-white rounded-lg hover:bg-purple-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  팀 참여
+                  {isJoining ? '참여 중...' : '팀 참여'}
                 </button>
               </div>
 

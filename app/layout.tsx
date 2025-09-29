@@ -14,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body className="bg-dark-bg text-white overflow-x-hidden">
+      <body className="bg-dark-bg text-white overflow-x-hidden font-nanum">
         <AuthProvider>
           {children}
         </AuthProvider>

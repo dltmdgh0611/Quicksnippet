@@ -255,7 +255,7 @@ export default function SnippetPage() {
                   <button
                     onClick={handleAnalyze}
                     disabled={isAnalyzing}
-                    className="flex-1 bg-purple-glow text-white py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 rounded-lg font-medium hover:from-purple-700 hover:to-purple-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-purple-500/25"
                   >
                     {isAnalyzing ? 'AI 분석 중...' : 'AI 가채점'}
                   </button>

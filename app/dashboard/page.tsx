@@ -22,20 +22,36 @@ export default function DashboardPage() {
   const [teamMembers, setTeamMembers] = useState<string[]>([]);
 
   useEffect(() => {
-    // Load team ID from localStorage
-    const savedTeamId = localStorage.getItem('teamId');
-    if (savedTeamId) {
-      setTeamId(savedTeamId);
+    // Firestore에서 사용자 데이터 로드 후 팀 데이터 로드
+    if (user?.email) {
+      loadUserAndTeamData();
     }
-  }, []);
+  }, [user]);
 
-  useEffect(() => {
-    if (teamId) {
-      fetchTeamHealthData();
+  const loadUserAndTeamData = async () => {
+    if (!user?.email) return;
+    
+    try {
+      // 사용자 데이터 로드
+      const userResponse = await fetch(`/api/user?user_email=${encodeURIComponent(user.email)}`);
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        setTeamId(userData.team_id || '');
+        
+        // 팀 데이터가 있으면 즉시 로드
+        if (userData.team_id) {
+          fetchTeamHealthData(userData.team_id);
+        } else {
+          setLoading(false);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+      setLoading(false);
     }
-  }, [teamId]);
+  };
 
-  const fetchTeamHealthData = async () => {
+  const fetchTeamHealthData = async (teamId: string) => {
     setLoading(true);
     try {
       const response = await fetch(`/api/team-health?team_id=${teamId}`);
@@ -177,9 +193,6 @@ export default function DashboardPage() {
             <Link href="/settings" className="text-white hover:text-purple-glow transition-colors">
               개인 설정
             </Link>
-            <Link href="/health" className="text-white hover:text-purple-glow transition-colors">
-              팀 헬스체크
-            </Link>
           </div>
         </nav>
       </header>
@@ -220,11 +233,7 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-8">
                 {/* Team Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white/5 p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-2">팀 ID</h3>
-                    <p className="text-2xl font-bold text-purple-glow">{teamId}</p>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-white/5 p-6 rounded-lg">
                     <h3 className="text-lg font-semibold mb-2">총 멤버 수</h3>
                     <p className="text-2xl font-bold text-blue-400">
