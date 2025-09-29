@@ -21,7 +21,6 @@ export default function HealthPage() {
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [teamId, setTeamId] = useState('');
-  const [apiResponse, setApiResponse] = useState<string>('');
 
   useEffect(() => {
     // Check if snippet data exists in sessionStorage
@@ -67,19 +66,10 @@ export default function HealthPage() {
         }),
       });
 
-      console.log('API Response Status:', response.status);
-      console.log('API Response Headers:', response.headers);
-      
-      const responseText = await response.text();
-      console.log('API Response Body:', responseText);
-
-      // 웹에 응답 표시
-      setApiResponse(`Status: ${response.status}\nResponse: ${responseText}`);
-
       if (response.ok) {
         // n8n webhook 성공 후 Firebase Firestore에도 저장
         try {
-          const dbResponse = await fetch('/api/team-health', {
+          await fetch('/api/team-health', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -92,24 +82,18 @@ export default function HealthPage() {
               rating: selectedRating
             }),
           });
-          
-          if (dbResponse.ok) {
-            console.log('Health check data saved to Firebase Firestore');
-          }
         } catch (dbError) {
-          console.error('Firebase Firestore save failed:', dbError);
+          // Firebase 저장 실패는 무시
         }
         
         alert('스니펫이 성공적으로 저장되었습니다!');
-        // sessionStorage.removeItem('snippetData');
-        // router.push('/');
+        sessionStorage.removeItem('snippetData');
+        router.push('/');
       } else {
-        console.error('API Error:', response.status, responseText);
-        throw new Error(`저장에 실패했습니다. Status: ${response.status}`);
+        alert('개발자 이승호한테 연락하세요');
       }
     } catch (error) {
-      console.error('Submit error:', error);
-      alert('저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+      alert('개발자 이승호한테 연락하세요');
     } finally {
       setIsSubmitting(false);
     }
@@ -229,15 +213,6 @@ export default function HealthPage() {
               </div>
             )}
 
-            {/* API Response Display */}
-            {apiResponse && (
-              <div className="mt-6 p-4 bg-white/5 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2">API 응답</h3>
-                <pre className="text-sm text-gray-300 whitespace-pre-wrap bg-black/20 p-3 rounded">
-                  {apiResponse}
-                </pre>
-              </div>
-            )}
             
           </div>
         </div>
