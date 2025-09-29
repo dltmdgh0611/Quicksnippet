@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import DarkVeil from '@/components/DarkVeil';
+import ShinyText from '@/components/ShinyText';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Home() {
@@ -115,9 +116,19 @@ export default function Home() {
         <div className="text-center max-w-4xl mx-auto">
           {/* Main Heading */}
           <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
-            Daily Snippet
+            <ShinyText 
+              text="Daily Snippet" 
+              disabled={false}
+              speed={3}
+              className="text-white text-5xl md:text-7xl font-bold"
+            />
             <br />
-            쉽고 빠른 추적 관리
+            <ShinyText 
+              text="쉽고 빠른 추적 관리" 
+              disabled={false}
+              speed={4}
+              className="text-white text-5xl md:text-7xl font-bold"
+            />
           </h1>
 
           {/* Call to Action Buttons */}
