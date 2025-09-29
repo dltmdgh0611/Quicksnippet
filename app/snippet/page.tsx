@@ -135,9 +135,9 @@ export default function SnippetPage() {
             <Link href="/settings" className="text-white hover:text-purple-glow transition-colors">
               개인 설정
             </Link>
-            <Link href="/health" className="text-white hover:text-purple-glow transition-colors">
-              헬스체크
-            </Link>
+                <Link href="/dashboard" className="text-white hover:text-purple-glow transition-colors">
+                  헬스체크
+                </Link>
           </div>
         </nav>
       </header>

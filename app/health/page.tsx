@@ -77,6 +77,25 @@ export default function HealthPage() {
       setApiResponse(`Status: ${response.status}\nResponse: ${responseText}`);
 
       if (response.ok) {
+        // n8n webhook 성공 후 로컬 데이터베이스에도 저장
+        try {
+          await fetch('/api/save-health-check', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              user_email: user.email,
+              team_id: teamId || 'default',
+              snippet_date: today,
+              content: content,
+              rating: selectedRating
+            }),
+          });
+        } catch (dbError) {
+          console.error('Local database save failed:', dbError);
+        }
+        
         alert('스니펫이 성공적으로 저장되었습니다!');
         // sessionStorage.removeItem('snippetData');
         // router.push('/');

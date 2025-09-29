@@ -71,9 +71,9 @@ export default function SettingsPage() {
             <span className="text-xl font-bold">Quick Snippet</span>
           </Link>
           <div className="flex items-center space-x-6">
-            <Link href="/health" className="text-white hover:text-purple-glow transition-colors">
-              헬스체크
-            </Link>
+                <Link href="/dashboard" className="text-white hover:text-purple-glow transition-colors">
+                  헬스체크
+                </Link>
             <button
               onClick={logout}
               className="text-white hover:text-purple-glow transition-colors"

@@ -48,9 +48,9 @@ export default function LoginPage() {
             <Link href="/" className="text-white hover:text-purple-glow transition-colors">
               홈
             </Link>
-            <Link href="/health" className="text-white hover:text-purple-glow transition-colors">
-              헬스체크
-            </Link>
+                <Link href="/dashboard" className="text-white hover:text-purple-glow transition-colors">
+                  헬스체크
+                </Link>
           </div>
         </nav>
       </header>
