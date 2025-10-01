@@ -43,7 +43,7 @@ export default function Home() {
       </div>
 
       {/* Header */}
-      <header className="relative z-10">
+      <header className="relative z-50">
         <nav className="flex items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center space-x-2">
             <div className="relative">
