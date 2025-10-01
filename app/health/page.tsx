@@ -42,11 +42,18 @@ export default function HealthPage() {
       const response = await fetch(`/api/user?user_email=${encodeURIComponent(user.email)}`);
       if (response.ok) {
         const userData = await response.json();
-        setTeamId(userData.team_id || 'default');
+        // default가 아닌 실제 팀 ID만 설정
+        if (userData.team_id && userData.team_id !== 'default') {
+          setTeamId(userData.team_id);
+        } else {
+          setTeamId('');
+        }
+      } else {
+        setTeamId('');
       }
     } catch (error) {
       console.error('Failed to load user data:', error);
-      setTeamId('default');
+      setTeamId('');
     }
   };
 
@@ -83,6 +90,13 @@ export default function HealthPage() {
   const handleSubmit = async () => {
     if (!snippetData || !user || selectedRating === null) {
       alert('모든 정보를 입력해주세요.');
+      return;
+    }
+
+    // 팀 ID가 없거나 default인 경우 차단
+    if (!teamId || teamId === 'default') {
+      alert('팀 ID가 설정되지 않았습니다. 설정 페이지에서 팀에 먼저 참여해주세요.');
+      router.push('/settings');
       return;
     }
 

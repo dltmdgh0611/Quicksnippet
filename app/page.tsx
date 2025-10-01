@@ -112,8 +112,24 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6">
+      <main className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 -mt-20">
         <div className="text-center max-w-4xl mx-auto">
+          {/* Patch Notes Banner */}
+          <Link
+            href="/patch-notes"
+            className="inline-block mb-8 group"
+          >
+            <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/40 rounded-full hover:border-purple-glow transition-all duration-300">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-purple-300 group-hover:text-purple-glow transition-colors">
+                🎉 v1.1.0 업데이트 - 확대 편집 & Magic Snippet 개선
+              </span>
+              <svg className="w-4 h-4 text-purple-300 group-hover:text-purple-glow transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </Link>
+
           {/* Main Heading */}
           <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
             <ShinyText 
@@ -136,9 +152,9 @@ export default function Home() {
             <Link href="/snippet" className="btn-primary text-lg px-8 py-4">
               Get Started
             </Link>
-            <button className="btn-secondary text-lg px-8 py-4">
+            <Link href="/patch-notes" className="btn-secondary text-lg px-8 py-4">
               More Info
-            </button>
+            </Link>
           </div>
         </div>
       </main>
@@ -201,7 +217,7 @@ export default function Home() {
             {/* Bottom Bar */}
             <div className="border-t border-white/10 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
               <p className="text-gray-400 text-sm">
-                © 2024 Ascentum Team. All rights reserved.
+                © 2025 Ascentum Team. All rights reserved.
               </p>
               <div className="flex items-center space-x-6 mt-4 md:mt-0">
                 <span className="text-gray-400 text-sm">Made with ❤️ by Ascentum</span>

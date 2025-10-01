@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import DarkVeil from '@/components/DarkVeil';
@@ -17,6 +17,11 @@ export default function SnippetPage() {
     tomorrow: ''
   });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [teamId, setTeamId] = useState<string | null>(null);
+  const [isLoadingTeamId, setIsLoadingTeamId] = useState(true);
+  const [improvingField, setImprovingField] = useState<string | null>(null);
+  const [expandedField, setExpandedField] = useState<string | null>(null);
+  const [expandedContent, setExpandedContent] = useState('');
   const [analysis, setAnalysis] = useState<{
     scores: {
       growth: number;
@@ -34,6 +39,36 @@ export default function SnippetPage() {
     };
   } | null>(null);
 
+  useEffect(() => {
+    if (user?.email) {
+      loadUserTeamId();
+    }
+  }, [user]);
+
+  const loadUserTeamId = async () => {
+    if (!user?.email) return;
+    
+    setIsLoadingTeamId(true);
+    try {
+      const response = await fetch(`/api/user?user_email=${encodeURIComponent(user.email)}`);
+      if (response.ok) {
+        const userData = await response.json();
+        if (userData.team_id && userData.team_id !== 'default') {
+          setTeamId(userData.team_id);
+        } else {
+          setTeamId(null);
+        }
+      } else {
+        setTeamId(null);
+      }
+    } catch (error) {
+      console.error('Failed to load team ID:', error);
+      setTeamId(null);
+    } finally {
+      setIsLoadingTeamId(false);
+    }
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setSnippet(prev => ({
       ...prev,
@@ -41,7 +76,112 @@ export default function SnippetPage() {
     }));
   };
 
+  const handleExpandSection = (field: string) => {
+    const currentValue = snippet[field as keyof typeof snippet];
+    setExpandedField(field);
+    setExpandedContent(currentValue);
+  };
+
+  const handleCloseExpanded = () => {
+    setExpandedField(null);
+    setExpandedContent('');
+  };
+
+  const handleSaveExpanded = () => {
+    if (expandedField) {
+      setSnippet(prev => ({
+        ...prev,
+        [expandedField]: expandedContent
+      }));
+    }
+    handleCloseExpanded();
+  };
+
+  const handleImproveSection = async (field: string) => {
+    const currentValue = snippet[field as keyof typeof snippet];
+    
+    if (!currentValue.trim()) {
+      alert('먼저 내용을 작성해주세요.');
+      return;
+    }
+
+    setImprovingField(field);
+    
+    try {
+      const response = await fetch('/api/improve-snippet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          field: field,
+          content: currentValue
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('개선 요청에 실패했습니다.');
+      }
+
+      const result = await response.json();
+      
+      // 개선된 내용으로 업데이트
+      setSnippet(prev => ({
+        ...prev,
+        [field]: result.improvedContent
+      }));
+      
+    } catch (error) {
+      console.error('Improve error:', error);
+      alert('AI 개선 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setImprovingField(null);
+    }
+  };
+
+  const handleImproveExpanded = async () => {
+    if (!expandedField || !expandedContent.trim()) {
+      alert('먼저 내용을 작성해주세요.');
+      return;
+    }
+
+    setImprovingField(expandedField);
+    
+    try {
+      const response = await fetch('/api/improve-snippet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          field: expandedField,
+          content: expandedContent
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('개선 요청에 실패했습니다.');
+      }
+
+      const result = await response.json();
+      setExpandedContent(result.improvedContent);
+      
+    } catch (error) {
+      console.error('Improve error:', error);
+      alert('AI 개선 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setImprovingField(null);
+    }
+  };
+
   const handleSave = () => {
+    // 팀 ID 체크
+    if (!teamId) {
+      alert('팀 ID가 설정되지 않았습니다. 설정 페이지에서 팀에 먼저 참여해주세요.');
+      router.push('/settings');
+      return;
+    }
+
     // Check if all fields are filled
     const isComplete = Object.values(snippet).every(value => value.trim() !== '');
     
@@ -183,6 +323,18 @@ export default function SnippetPage() {
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4">Daily Snippet</h1>
             <p className="text-gray-300">오늘 하루를 기록하고 AI가 분석해드립니다</p>
+            {!isLoadingTeamId && !teamId && (
+              <div className="mt-4 bg-red-500/20 border border-red-500/50 rounded-lg p-4">
+                <p className="text-red-300 font-medium">⚠️ 팀 ID가 설정되지 않았습니다.</p>
+                <p className="text-red-200 text-sm mt-1">
+                  스니펫을 저장하려면 먼저{' '}
+                  <Link href="/settings" className="underline hover:text-white">
+                    설정 페이지
+                  </Link>
+                  에서 팀에 참여해주세요.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -192,9 +344,42 @@ export default function SnippetPage() {
               
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    What? (무엇을 했나요?)
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium">
+                      What? (무엇을 했나요?)
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleExpandSection('what')}
+                        className="text-xs px-2 py-1 bg-white/10 border border-white/20 text-white rounded-md hover:bg-white/20 transition-all flex items-center"
+                        title="확대하기"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleImproveSection('what')}
+                        disabled={improvingField === 'what'}
+                        className="text-xs px-3 py-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                      >
+                        {improvingField === 'what' ? (
+                          <>
+                            <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>개선 중...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>✨</span>
+                            <span>Magic Snippet</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                   <textarea
                     value={snippet.what}
                     onChange={(e) => handleInputChange('what', e.target.value)}
@@ -204,9 +389,42 @@ export default function SnippetPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Why? (왜 그렇게 했나요?)
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium">
+                      Why? (왜 그렇게 했나요?)
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleExpandSection('why')}
+                        className="text-xs px-2 py-1 bg-white/10 border border-white/20 text-white rounded-md hover:bg-white/20 transition-all flex items-center"
+                        title="확대하기"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleImproveSection('why')}
+                        disabled={improvingField === 'why'}
+                        className="text-xs px-3 py-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                      >
+                        {improvingField === 'why' ? (
+                          <>
+                            <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>개선 중...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>✨</span>
+                            <span>Magic Snippet</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                   <textarea
                     value={snippet.why}
                     onChange={(e) => handleInputChange('why', e.target.value)}
@@ -216,9 +434,42 @@ export default function SnippetPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Highlight (오늘의 하이라이트)
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium">
+                      Highlight (오늘의 하이라이트)
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleExpandSection('highlight')}
+                        className="text-xs px-2 py-1 bg-white/10 border border-white/20 text-white rounded-md hover:bg-white/20 transition-all flex items-center"
+                        title="확대하기"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleImproveSection('highlight')}
+                        disabled={improvingField === 'highlight'}
+                        className="text-xs px-3 py-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                      >
+                        {improvingField === 'highlight' ? (
+                          <>
+                            <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>개선 중...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>✨</span>
+                            <span>Magic Snippet</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                   <textarea
                     value={snippet.highlight}
                     onChange={(e) => handleInputChange('highlight', e.target.value)}
@@ -228,9 +479,42 @@ export default function SnippetPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Lowlight (어려웠던 점)
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium">
+                      Lowlight (어려웠던 점)
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleExpandSection('lowlight')}
+                        className="text-xs px-2 py-1 bg-white/10 border border-white/20 text-white rounded-md hover:bg-white/20 transition-all flex items-center"
+                        title="확대하기"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleImproveSection('lowlight')}
+                        disabled={improvingField === 'lowlight'}
+                        className="text-xs px-3 py-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                      >
+                        {improvingField === 'lowlight' ? (
+                          <>
+                            <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>개선 중...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>✨</span>
+                            <span>Magic Snippet</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                   <textarea
                     value={snippet.lowlight}
                     onChange={(e) => handleInputChange('lowlight', e.target.value)}
@@ -240,9 +524,42 @@ export default function SnippetPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Tomorrow (내일 계획)
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium">
+                      Tomorrow (내일 계획)
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleExpandSection('tomorrow')}
+                        className="text-xs px-2 py-1 bg-white/10 border border-white/20 text-white rounded-md hover:bg-white/20 transition-all flex items-center"
+                        title="확대하기"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleImproveSection('tomorrow')}
+                        disabled={improvingField === 'tomorrow'}
+                        className="text-xs px-3 py-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                      >
+                        {improvingField === 'tomorrow' ? (
+                          <>
+                            <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>개선 중...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>✨</span>
+                            <span>Magic Snippet</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                   <textarea
                     value={snippet.tomorrow}
                     onChange={(e) => handleInputChange('tomorrow', e.target.value)}
@@ -426,6 +743,109 @@ export default function SnippetPage() {
           </div>
         </div>
       </main>
+
+      {/* 확대 모달 */}
+      {expandedField && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-7xl h-[90vh] bg-black/40 backdrop-blur-md rounded-2xl border border-white/20 flex flex-col">
+            {/* 모달 헤더 */}
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
+              <h2 className="text-2xl font-bold">
+                {expandedField === 'what' && 'What? (무엇을 했나요?)'}
+                {expandedField === 'why' && 'Why? (왜 그렇게 했나요?)'}
+                {expandedField === 'highlight' && 'Highlight (오늘의 하이라이트)'}
+                {expandedField === 'lowlight' && 'Lowlight (어려웠던 점)'}
+                {expandedField === 'tomorrow' && 'Tomorrow (내일 계획)'}
+              </h2>
+              <button
+                onClick={handleCloseExpanded}
+                className="text-white hover:text-gray-300 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* 모달 본문 */}
+            <div className="flex-1 grid grid-cols-2 gap-6 p-6 overflow-hidden">
+              {/* 에디터 */}
+              <div className="flex flex-col">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold">편집</h3>
+                  <button
+                    onClick={handleImproveExpanded}
+                    disabled={improvingField === expandedField}
+                    className="text-xs px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-md hover:from-yellow-600 hover:to-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  >
+                    {improvingField === expandedField ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>개선 중...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>✨</span>
+                        <span>Magic Snippet</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <textarea
+                  value={expandedContent}
+                  onChange={(e) => setExpandedContent(e.target.value)}
+                  className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:border-purple-glow transition-colors resize-none font-mono text-sm"
+                  placeholder="내용을 작성하세요..."
+                />
+              </div>
+
+              {/* 마크다운 미리보기 */}
+              <div className="flex flex-col">
+                <h3 className="text-lg font-semibold mb-3">미리보기</h3>
+                <div className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-lg overflow-auto">
+                  <div className="prose prose-invert max-w-none">
+                    {expandedContent.split('\n').map((line, idx) => {
+                      // 간단한 마크다운 렌더링
+                      if (line.startsWith('# ')) {
+                        return <h1 key={idx} className="text-3xl font-bold mb-4">{line.substring(2)}</h1>;
+                      } else if (line.startsWith('## ')) {
+                        return <h2 key={idx} className="text-2xl font-bold mb-3">{line.substring(3)}</h2>;
+                      } else if (line.startsWith('### ')) {
+                        return <h3 key={idx} className="text-xl font-bold mb-2">{line.substring(4)}</h3>;
+                      } else if (line.startsWith('- ') || line.startsWith('* ')) {
+                        return <li key={idx} className="ml-4 mb-1">{line.substring(2)}</li>;
+                      } else if (line.trim() === '') {
+                        return <br key={idx} />;
+                      } else {
+                        return <p key={idx} className="mb-2">{line}</p>;
+                      }
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 모달 푸터 */}
+            <div className="flex items-center justify-end space-x-4 p-6 border-t border-white/10">
+              <button
+                onClick={handleCloseExpanded}
+                className="px-6 py-2 border border-white/20 text-white rounded-lg hover:bg-white/10 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleSaveExpanded}
+                className="px-6 py-2 bg-purple-glow text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                적용
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
