@@ -119,12 +119,12 @@ export default function Home() {
             href="/patch-notes"
             className="inline-block mb-8 group"
           >
-            <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/40 rounded-full hover:border-purple-glow transition-all duration-300">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-purple-300 group-hover:text-purple-glow transition-colors">
-                🎉 v1.1.0 업데이트 - 확대 편집 & Magic Snippet 개선
+            <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/40 rounded-full hover:border-red-glow transition-all duration-300">
+              <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-red-300 group-hover:text-red-glow transition-colors">
+                🚨 비상! 데일리 스니펫 api 응답없음...
               </span>
-              <svg className="w-4 h-4 text-purple-300 group-hover:text-purple-glow transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-red-300 group-hover:text-red-glow transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>

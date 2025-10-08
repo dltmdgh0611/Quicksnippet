@@ -13,6 +13,13 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
+    version: 'v1.1.1',
+    date: '2025.10.08',
+    type: 'bugfix',
+    title: '🚨 비상! 데일리 스니펫 api 응답없음...',
+    description: 'Daily Snippet API가 응답하지 않는 심각한 문제가 발생했습니다. 현재 원인을 파악하고 있으며 최대한 빨리 복구하겠습니다.'
+  },
+  {
     version: 'v1.1.0',
     date: '2025.10.01',
     type: 'feature',
